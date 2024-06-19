@@ -28,6 +28,16 @@ class RandomChar extends Component {
             .then(this.onCharLoaded)
     }
 
+    checkDescription = (description) => {
+        console.log(description)
+        if (!description) {
+            description = 'No description';
+        } else if (description.length > 100) {
+            description = description.substring(0, 100) + '...';
+        }
+        return description;
+    }
+
 
     render() {
         const {char: {name, description, thumbnail, homepage, wiki}} = this.state;
@@ -38,7 +48,7 @@ class RandomChar extends Component {
                     <div className="randomchar__info">
                         <p className="randomchar__name">{name}</p>
                         <p className="randomchar__descr">
-                            {description}
+                            {this.checkDescription(description)}
                         </p>
                         <div className="randomchar__btns">
                             <a href={homepage} className="button button__main">
