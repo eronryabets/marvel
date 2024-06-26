@@ -1,7 +1,8 @@
-import {Component} from "react";
-
+import {Component} from 'react';
+import Spinner from '../spinner/Spinner';
+import ErrorMessage from '../errorMessage/ErrorMessage';
+import MarvelService from '../../services/MarvelService';
 import './charList.scss';
-import MarvelService from "../../services/MarvelService";
 
 class CharList extends Component {
 
@@ -14,51 +15,65 @@ class CharList extends Component {
     marvelService = new MarvelService();
 
     componentDidMount() {
-        this.getCharList();
-    }
-
-    componentWillUnmount() {
-    }
-
-
-    getCharList = () => {
-        console.log("getCharList");
-        this.marvelService
-            .getAllCharacters()
-            .then(this.onCharListLoaded);
+        this.marvelService.getAllCharacters()
+            .then(this.onCharListLoaded)
+            .catch(this.onError)
     }
 
     onCharListLoaded = (charList) => {
         this.setState({
-            charList
-        });
+            charList,
+            loading: false
+        })
     }
 
+    onError = () => {
+        this.setState({
+            error: true,
+            loading: false
+        })
+    }
 
-    randomCharList = (charList) => {
-        const characters = charList.map((char, index) => {
-            const {name, thumbnail} = char;
-            const isSelected = index === 1; // пример условия для выделения элемента
-            const classNames = `char__item ${isSelected ? 'char__item_selected' : ''}`;
+    // Этот метод создан для оптимизации,
+    // чтобы не помещать такую конструкцию в метод render
+    renderItems(arr) {
+        const items =  arr.map((item, index) => {
+            let imgStyle = {'objectFit' : 'cover'};
+            if (item.thumbnail === 'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg') {
+                imgStyle = {'objectFit' : 'unset'};
+            }
 
             return (
-            <li key={index} className={classNames}>
-                <img src={thumbnail} alt="abyss"/>
-                <div className="char__name">{name}</div>
-            </li>
+                <li key={index}
+                    className="char__item">
+                        <img src={item.thumbnail} alt={item.name} style={imgStyle}/>
+                        <div className="char__name">{item.name}</div>
+                </li>
+            )
+        });
+        // А эта конструкция вынесена для центровки спиннера/ошибки
+        return (
+            <ul className="char__grid">
+                {items}
+            </ul>
         )
-        })
-        return characters;
     }
 
     render() {
-        const {charList} = this.state;
-        const items = this.randomCharList(charList);
+
+        const {charList, loading, error} = this.state;
+
+        const items = this.renderItems(charList);
+
+        const errorMessage = error ? <ErrorMessage/> : null;
+        const spinner = loading ? <Spinner/> : null;
+        const content = !(loading || error) ? items : null;
+
         return (
             <div className="char__list">
-                <ul className="char__grid">
-                    {items}
-                </ul>
+                {errorMessage}
+                {spinner}
+                {content}
                 <button className="button button__main button__long">
                     <div className="inner">load more</div>
                 </button>
