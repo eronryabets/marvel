@@ -13,7 +13,9 @@ class CharList extends Component {
         error: false,
         newItemLoading: false,
         offset: 1548,
-        charEnded: false
+        charEnded: false,
+        charFocus: null,
+        charSelected: null
     }
 
     marvelService = new MarvelService();
@@ -57,6 +59,25 @@ class CharList extends Component {
         })
     }
 
+    charFocusOn = (id) => {
+        this.setState({charFocus: id});
+    }
+
+    charFocusOff = () => {
+        this.setState({charFocus: null});
+    }
+
+    charSelected = (id) => {
+         this.setState({charSelected: id});
+    }
+
+    handleKeyDown = (event, id) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            this.props.onCharSelected(id);
+            this.charSelected(id);
+        }
+    }
+
     renderItems(arr) {
         const items = arr.map((item) => {
             let imgStyle = {'objectFit': 'cover'};
@@ -64,11 +85,28 @@ class CharList extends Component {
                 imgStyle = {'objectFit': 'unset'};
             }
 
+            // добавьте условие для изменения стиля при наведении
+            let itemClass = 'char__item';
+            if (this.state.charFocus === item.id) {
+                itemClass += ' char__item_focus';
+            }
+            if (this.state.charSelected === item.id) {
+                itemClass += ' char__item_selected';
+            }
+
             return (
                 <li
-                    className="char__item"
+                    className={itemClass}
                     key={item.id}
-                    onClick={() => this.props.onCharSelected(item.id)}>
+                    tabIndex="0"
+                    onClick={() => {
+                        this.props.onCharSelected(item.id)
+                        this.charSelected(item.id)
+                    }}
+                    onMouseEnter={() => this.charFocusOn(item.id)}
+                    onMouseLeave={() => this.charFocusOff(item.id)}
+                    onKeyDown={(event) => this.handleKeyDown(event, item.id)}
+                >
                     <img src={item.thumbnail} alt={item.name} style={imgStyle}/>
                     <div className="char__name">{item.name}</div>
                 </li>
@@ -84,8 +122,10 @@ class CharList extends Component {
 
     render() {
 
-        const {charList, loading, error, offset,
-            newItemLoading, charEnded} = this.state;
+        const {
+            charList, loading, error, offset,
+            newItemLoading, charEnded
+        } = this.state;
 
         const items = this.renderItems(charList);
 
